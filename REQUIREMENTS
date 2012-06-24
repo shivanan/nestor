@@ -3,4 +3,4 @@ Whoosh
 Dropbox
 PyMongo - sudo easy_install pymongo
 py-bcrypt - sudo easy_install py-bcrypt
-
+Flask - sudo easy_install Flask

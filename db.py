@@ -1,3 +1,4 @@
+# Dropbox API wrapper
 import os
 import dropbox
 import webbrowser
@@ -10,8 +11,6 @@ class NoAccessTokenException(Exception): pass
 
 def get_config_path():
     return os.path.join(os.getenv('HOME'),'.nestor')
-def get_access_token_path():
-    return os.path.join(os.getenv('HOME'),'.nestor-access')
 
 def save_access_token(token):
     stream = open(get_access_token_path(),'wb')
@@ -34,38 +33,19 @@ def loadkeys():
 def get_session():
     key,secret = loadkeys()
     return dropbox.session.DropboxSession(key,secret,'dropbox')
-def get_client():
+def get_client(user):
     session = get_session()
     
-    path = get_access_token_path()
-    if not os.path.exists(path):
+    key,secret = user.get('dbkey'),user.get('dbsecret')
+    if not key or not token:
         raise NoAccessTokenException()
-    lines = open(path).read().splitlines()
-    if len(lines) != 2:
-        raise NoAccessTokenException()
-    
-    key = lines[0].strip()
-    secret = lines[1].strip()
-
     session.set_token(key,secret)
     return dropbox.client.DropboxClient(session)
 
-def authapp():
-    s = get_session()
-    req_token = s.obtain_request_token()
-    print 'Request Token',req_token
-    access_token = None
-    try:
-        access_token = s.obtain_access_token(req_token)
-    except:
-        print 'Access Token request failed. Authorizing...'
-        url = s.build_authorize_url(req_token)
-        print 'Url:',url
-        webbrowser.open(url)
-        raw_input()
-        access_token = s.obtain_access_token(req_token)
-        save_access_token(access_token)
-    return
+def authapp(session,url):
+    req_token = session.obtain_request_token()
+    auth_url = session.build_authorize_url(req_token,url)
+    return req_token,auth_url
 
 def walk(client,path):
     md = client.metadata(path)

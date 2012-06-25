@@ -1,0 +1,8 @@
+Email: {{user.email}}
+{% if user.dbkey and user.dbsecret %}
+{% else %}
+NO DB TOKEN
+<form method='post' action='/linkaccount'>
+	<input type='submit' value='Link Now' />
+</form>
+{% endif %}

@@ -56,6 +56,10 @@ class DataStore(object):
 		if not user: raise UnknownUserException()
 		user['dbkey'] = key
 		user['dbsecret'] = secret
+		db.users.save(user)
+	def get_user(self,id):
+		db = self.db()
+		return db.users.find_one({'_id':id})
 		
 
 

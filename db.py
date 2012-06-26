@@ -33,11 +33,12 @@ def loadkeys():
 def get_session():
     key,secret = loadkeys()
     return dropbox.session.DropboxSession(key,secret,'dropbox')
-def get_client(user):
-    session = get_session()
+def get_client(user,session=None):
+    if not session:
+        session = get_session()
     
     key,secret = user.get('dbkey'),user.get('dbsecret')
-    if not key or not token:
+    if not key or not secret:
         raise NoAccessTokenException()
     session.set_token(key,secret)
     return dropbox.client.DropboxClient(session)
@@ -47,7 +48,7 @@ def authapp(session,url):
     auth_url = session.build_authorize_url(req_token,url)
     return req_token,auth_url
 
-def walk(client,path):
+def walk(client,md):
     md = client.metadata(path)
     directories = [x['path'] for x in md['contents'] if x['is_dir'] ]
     files = [x['path'] for x in md['contents'] if not x['is_dir'] ]
@@ -56,6 +57,9 @@ def walk(client,path):
         for _p,_d,_f in walk(client,os.path.join(path,d)):
             yield _p,_d,_f
 
+
+def create_token(key,secret):
+    return dropbox.session.OAuthToken(key,secret)
 
 def get_client_try_auth():
     try:

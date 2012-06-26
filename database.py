@@ -60,9 +60,42 @@ class DataStore(object):
 	def get_user(self,id):
 		db = self.db()
 		return db.users.find_one({'_id':id})
+
+	def get_path_for_user(self,id,path):
+		db = self.db()
+		return db.paths.find_one({"uid":id,"path":path})
+	
+	def set_path_for_user(self,id,path,metadata):
+		db = self.db()
+		path_data = {"uid":id,"path":path,"metadata":metadata}
+		db.paths.update({"uid":id,"path":path},path_data)
+		return path_data
+
+	def linked_users(self):
+		db = self.db()
+		return db.users.find({"dbkey":{"$exists":True},"dbsecret":{"$exists":True}} )
 		
+	def get_document(self,id,file):
+		db = self.db()
+		x = db.files.find_one({"uid":id,"file":file})
+		return x
+	
+	def save_document(self,id,file,indexed=False,modified=None,metadata=None,error=None):
+		condition = {"uid":id,"file":file}
+		modifications = {"indexed":indexed}
+		if modified:
+			modifications['modified'] = modified
+		if metadata:
+			modifications['metadata'] = metadata
+		if error:
+			modifications['error'] = error
 
+		db = self.db()
+		db.files.update(condition,{"$set":modifications},upsert=True)
+	
 
+def get_user(id):
+	return DataStore().get_user(id)
 
 def test_add(email,password):
 	ds = DataStore()

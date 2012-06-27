@@ -6,3 +6,12 @@ NO DB TOKEN
 	<input type='submit' value='Link Now' />
 </form>
 {% endif %}
+
+<form method='post' action='/search'>
+	Search: <input type='text' id='q' name='q' value='{{q}}' /> <input type='submit' value='Search' />
+</form>
+{% for x in results %}
+<div>
+	<a href='http://www.dropbox.com/{{x.href}}'>{{x.path}}</a>
+</div>
+{% endfor %}

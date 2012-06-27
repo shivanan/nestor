@@ -8,7 +8,7 @@ import os
 import codecs
 
 schema = Schema(filename=TEXT(stored=True),title=TEXT(stored=True),content=TEXT,path=ID(stored=True))
-ix = open_dir('dbbind')
+ix = open_dir('/Users/shivanan/indices/4fe88b808a1f5002ec000000')
 print ix.schema
 with ix.searcher() as searcher:
     print searcher.doc_count()

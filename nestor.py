@@ -1,10 +1,15 @@
 #!/usr/bin/env python
+import sys
+import os
 from flask import Flask,render_template,request,session,redirect,url_for
 from flaskext.kvsession import KVSessionExtension
 from simplekv.memory import DictStore
 import database
 import db
 import dropbox
+import indexer
+from whoosh.index import open_dir
+from whoosh.qparser import QueryParser,MultifieldParser
 
 DEBUG = True
 
@@ -25,6 +30,30 @@ def index():
 	return redirect(url_for ('login'))
 
 
+@app.route('/search',methods=['GET','POST'])
+def search():
+	if 'uid' in session:
+		q = request.form.get('q','')
+		uid = session['uid']
+		ds = database.DataStore()
+		user = ds.get_user(uid)
+
+		if not 'index' in session:
+
+			session['index'] = open_dir(indexer.get_index_dir(uid))
+		index = session['index']
+		with index.searcher() as searcher:
+			query = MultifieldParser(['content','title'],index.schema).parse(unicode(q))
+			sr = searcher.search(query,terms=True)
+			results = []
+			for x in sr:
+				p = {}
+				p['path'] = x['path']
+				p['href'] = 'home' + os.path.dirname(p['path']) + '?select=' + os.path.basename(p['path'])
+				results.append(p)
+			print results
+			return render_template('userhome.html',user=user,q=q,results=results)
+	return redirect(url_for ('login'))
 @app.route('/login',methods=['GET','POST'])
 def login():
 	if request.method == 'GET':

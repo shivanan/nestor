@@ -174,7 +174,7 @@ def index_user(id):
     ds.update_indexed_time(id)
 
 
-def index_users():
+def _index_users():
     processes = {}
     while True:
         linked_users = database.DataStore().linked_users()
@@ -199,6 +199,12 @@ def index_users():
 
         time.sleep(2)
 
+def index_users(new_process=False):
+    if not new_process:
+        _index_users()
+        return
+    p = multiprocessing.Process(target=_index_users)
+    p.start()
 
 if __name__ == '__main__':
     index_users()

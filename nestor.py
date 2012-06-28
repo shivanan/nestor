@@ -131,4 +131,5 @@ def linked():
 
 
 if __name__ == '__main__':
-    app.run(debug=DEBUG)
+	indexer.index_users(new_process=True)
+	app.run(debug=DEBUG)

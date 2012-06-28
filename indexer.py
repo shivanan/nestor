@@ -139,7 +139,7 @@ def index_user(id):
             
             if not stale:
                 return
-            print  '[%s] \033[94m',f,'haschanges',modified,last_modified,file_md['modified'],'\033[0m' % (user_email)
+            print  '\033[94m','['+user_email+']',f,'haschanges',modified,last_modified,file_md['modified'],'\033[0m'
 
             def stream_reader(fr,limit=None):
                 if limit:

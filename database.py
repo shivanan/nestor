@@ -68,7 +68,7 @@ class DataStore(object):
 	def set_path_for_user(self,id,path,metadata):
 		db = self.db()
 		path_data = {"uid":id,"path":path,"metadata":metadata}
-		db.paths.update({"uid":id,"path":path},path_data)
+		db.paths.update({"uid":id,"path":path},path_data,upsert=True)
 		return path_data
 
 	def linked_users(self):
@@ -80,7 +80,7 @@ class DataStore(object):
 		x = db.files.find_one({"uid":id,"file":file})
 		return x
 	
-	def update_indexed_time(uid,dt=None):
+	def update_indexed_time(self,uid,dt=None):
 		if not dt:
 			dt = datetime.datetime.utcnow()
 

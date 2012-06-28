@@ -10,6 +10,10 @@ import db
 import database
 import email.utils
 import datetime
+import time
+import multiprocessing
+
+INDEX_INTERVAL = 60*30
 
 def get_schema():
     schema = Schema(filename=TEXT(stored=True),title=TEXT(stored=True),content=TEXT,path=ID(stored=True,unique=True))
@@ -19,10 +23,12 @@ def get_index_dir(uid):
     return os.path.join('/Users/shivanan/indices',str(uid))
 
 
+#This is supposed to parse whatever string the dropbox api returns for 'modified'
+#into a valid datetime.datetime object
 def parse_date(dts):
     x = email.utils.parsedate_tz(dts)
     t = email.utils.mktime_tz(x)
-    return datetime.datetime.fromtimestamp(t)
+    return datetime.datetime.fromtimestamp(time.mktime(x[:9]))
 
 def index_user(id):
     user = database.get_user(id)
@@ -30,6 +36,7 @@ def index_user(id):
     ds = database.DataStore()
     session = db.get_session()
     client = db.get_client(user,session)
+    blacklisted_paths = ['/1Password.agilekeychain']
 
     index_path = get_index_dir(id)
     ix = None
@@ -50,12 +57,18 @@ def index_user(id):
         return path_data
 
     def index_path(p):
+        print 'Indexing',p
+        components = p.strip('/').split('/')
+        for b in blacklisted_paths:
+            if p.lower().startswith(b.lower()):
+                print 'Skipping path',p
+                return
         pd = get_path(p)
         md = pd['metadata']
         directories = [x['path'] for x in md['contents'] if x['is_dir'] ]
         files = [x for x in md['contents'] if not x['is_dir'] ]
         for f in files:
-            index_file(x,f['path'],f['path'])
+            index_file(f,f['path'],f['path'])
 
         for d in directories:
             index_path(d)
@@ -76,13 +89,12 @@ def index_user(id):
         try:
             #file_md = client.metadata(f)
             modified = parse_date(file_md['modified'])
-            print 'MOD',modified
             stale = (not last_modified) or ( (modified - last_modified).total_seconds() > 0 )
             
             if not stale:
-                print 'No change',f
+                #print 'No change',f
                 return
-            print f,'haschanges',modified,last_modified
+            print f,'haschanges',modified,last_modified,file_md['modified']
 
             def stream_reader(fr,limit=None):
                 if limit:
@@ -92,7 +104,6 @@ def index_user(id):
                 
                 stream,data = client.get_file_and_metadata(fr)
                 content = stream.read()
-                print 'got metadata,content',f,len(content)
                 return content
             
             cd = reader.readtext(f,stream_reader)
@@ -116,48 +127,36 @@ def index_user(id):
     index_path('/')
     writer.close()
     print 'committing'
+    ds.update_indexed_time(id)
 
 
 def index_users():
-    linked_users = database.DataStore().linked_users()
-    for user in linked_users:
-        index_user(user['_id'])
+    processes = {}
+    while True:
+        linked_users = database.DataStore().linked_users()
+        for user in linked_users:
+            indexed_time = user.get('indexed_time')
+            if indexed_time and (  (datetime.datetime.utcnow() - indexed_time).total_seconds() < INDEX_INTERVAL  ):
+                continue
+            if user['_id'] in processes:
+                print '\033[94m',user['_id'],'already being processed','\033[0m'
+                continue
+            
+            print "indexing",user
+            print '\033[92m','indexing',user,'\033[0m'
+            p = multiprocessing.Process(target=index_user, args=(user['_id'],) )
+            p.start()
+            processes[user['_id']] = p
+        
+
+        for uid,p in processes.items():
+            if p.is_alive(): continue
+            print 'Process for',uid,'no longer active'
+            del processes[uid]
+
+        time.sleep(2)
+
+        #index_user(user['_id'])
 
 if __name__ == '__main__':
     index_users()
-# if not os.path.exists('dbbind'):
-#     os.mkdir('dbbind')
-# ix = create_in('dbbind',schema)
-# writer = ix.writer()
-
-# client = db.get_client()
-# print 'got client'
-# def index_file(f,title):
-#     if not fnmatch.fnmatch(f,'*.*'): return
-#     try:
-#         def stream_reader(fr,limit=None):
-#             stream,data = client.get_file_and_metadata(fr)
-#             if limit:
-#                 if data['bytes'] > limit:
-#                     print 'skipping due to limit',limit,data['bytes']
-#                     return None
-#             content = stream.read()
-#             print 'got metadata,content',len(content)
-#             return content
-#         cd = reader.readtext(f,stream_reader)
-#         if not cd: 
-#             cd = ''
-#         if not type(cd) is unicode:
-#             cd = reader.unicodify(cd)
-#         writer.add_document(title=unicode(title),path=unicode(f),filename=unicode(title),content=cd)
-#     except Exception,e:
-#         print 'skipping',e
-#         return
-#         pass
-
-# for root,dirs,files in db.walk(client,'/'):
-#     #print 'walking dirs',root,dirs,files
-#     for file in files:
-#         f = os.path.join(root,file)
-#         index_file(f,file)
-# writer.commit()

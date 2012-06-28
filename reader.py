@@ -12,14 +12,19 @@ def unicodify(txt):
 def stream_to_file(f,stream_reader):
     code,fn = tempfile.mkstemp()
     print 'saving',f,'to',fn
+
+    content = stream_reader(f)
+    if not content: return None
+
     stream = open(fn,'wb')
-    stream.write(stream_reader(f))
+    stream.write(content)
     stream.close()
     print 'closed it',fn
     return fn
 def readpdf(f,stream_reader):
     try:
         f = stream_to_file(f,stream_reader)
+        if not f: return None
         print 'reading pdf',f
         stdout,stdin = popen2.popen2(('pdftotext',f,'-'))
         txt = stdout.read()
@@ -31,6 +36,7 @@ def readpdf(f,stream_reader):
         return None
 def readdocx(f,stream_reader):
     f = stream_to_file(f,stream_reader)
+    if not f: return None
     d = docx.opendocx(f)
     txt = ''.join(x for x in docx.getdocumenttext(d))
     print 'reading docx',f,txt

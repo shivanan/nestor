@@ -20,23 +20,33 @@ app.secret_key = 'ssshhhh!'
 store = DictStore()
 KVSessionExtension(store,app)
 
+def xint(i,def_val=0):
+	try:
+		return int(i)
+	except ValueError:
+		return def_val
+
 @app.route('/')
 def index():
 	if 'uid' in session:
 		uid = session['uid']
 		ds = database.DataStore()
 		user = ds.get_user(uid)
-		return render_template('userhome.html',user=user)
+		filecount = ds.index_count(uid)
+		return render_template('userhome.html',user=user,filecount=filecount)
+	
 	return redirect(url_for ('login'))
 
 
 @app.route('/search',methods=['GET','POST'])
 def search():
 	if 'uid' in session:
-		q = request.form.get('q','')
+		q = request.values.get('q','')
+		page = xint(request.values.get('page',''),1)
 		uid = session['uid']
 		ds = database.DataStore()
 		user = ds.get_user(uid)
+		filecount = ds.index_count(uid)
 
 		if not 'index' in session:
 
@@ -44,7 +54,7 @@ def search():
 		index = session['index']
 		with index.searcher() as searcher:
 			query = MultifieldParser(['content','title'],index.schema).parse(unicode(q))
-			sr = searcher.search(query,terms=True)
+			sr = searcher.search_page(query,page,terms=True,pagelen=20)
 			results = []
 			for x in sr:
 				p = {}
@@ -52,7 +62,7 @@ def search():
 				p['href'] = 'home' + os.path.dirname(p['path']) + '?select=' + os.path.basename(p['path'])
 				results.append(p)
 			print results
-			return render_template('userhome.html',user=user,q=q,results=results)
+			return render_template('userhome.html',user=user,q=q,results=results,nextpage=page+1,filecount=filecount)
 	return redirect(url_for ('login'))
 @app.route('/login',methods=['GET','POST'])
 def login():

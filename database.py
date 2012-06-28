@@ -35,7 +35,7 @@ class DataStore(object):
 		if existing_user:
 			raise InvalidUserException('Email address already exists')
 		
-		user['created'] = datetime.datetime.now()
+		user['created'] = datetime.datetime.utcnow()
 		id = db.users.insert(user)
 		return id
 
@@ -80,6 +80,16 @@ class DataStore(object):
 		x = db.files.find_one({"uid":id,"file":file})
 		return x
 	
+	def update_indexed_time(uid,dt=None):
+		if not dt:
+			dt = datetime.datetime.utcnow()
+
+		d = {}
+		d['indexed_time'] = dt
+		db = self.db()
+		db.users.update({"_id":uid},{"$set":d})
+	
+
 	def save_document(self,id,file,indexed=False,modified=None,metadata=None,error=None):
 		condition = {"uid":id,"file":file}
 		modifications = {"indexed":indexed}
@@ -92,6 +102,9 @@ class DataStore(object):
 
 		db = self.db()
 		db.files.update(condition,{"$set":modifications},upsert=True)
+	def index_count(self,id):
+		db = self.db()
+		return db.files.find({"uid":id,"indexed":True}).count()
 	
 
 def get_user(id):

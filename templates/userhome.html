@@ -1,17 +1,31 @@
-Email: {{user.email}}
-{% if user.dbkey and user.dbsecret %}
-{% else %}
-NO DB TOKEN
-<form method='post' action='/linkaccount'>
-	<input type='submit' value='Link Now' />
-</form>
-{% endif %}
-
-<form method='post' action='/search'>
-	Search: <input type='text' id='q' name='q' value='{{q}}' /> <input type='submit' value='Search' />
-</form>
-{% for x in results %}
 <div>
-	<a href='http://www.dropbox.com/{{x.href}}'>{{x.path}}</a>
+Email: {{user.email}}
 </div>
-{% endfor %}
+{% if filecount %}
+<div>Indexed Files: {{filecount}}</div>
+{% endif %}
+{% if user.dbkey and user.dbsecret %}
+
+	<form method='post' action='/search'>
+		Search: <input type='text' id='q' name='q' value='{{q}}' /> <input type='submit' value='Search' />
+	</form>
+	{% for x in results %}
+		<div>
+			<a href='http://www.dropbox.com/{{x.href}}'>{{x.path}}</a>
+		</div>
+	{% endfor %}
+	{% if results %}
+		<a href='/search?page={{nextpage}}&amp;q={{q}}'>Next</a>
+	{% endif %}
+
+
+{% else %}
+
+	<div><b>Your DropBox account has not been linked yet</b></div>
+	<form method='post' action='/linkaccount'>
+		<div>
+			<input type='submit' value='Link Now' />
+		</div>
+	</form>
+
+{% endif %}

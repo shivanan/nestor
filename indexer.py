@@ -61,6 +61,7 @@ def isdoc(f):
 
 def index_user(id):
     user = database.get_user(id)
+    user_email = user['email']
     token = db.create_token(user['dbkey'],user['dbsecret'])
     ds = database.DataStore()
     session = db.get_session()
@@ -108,12 +109,13 @@ def index_user(id):
         directories = [x['path'] for x in md['contents'] if x['is_dir'] ]
         files = [x for x in md['contents'] if not x['is_dir'] ]
         for f in files:
-            f,ext = os.path.splitext(f.lower())
+            file_path = f['path']
+            dir_part,ext = os.path.splitext(file_path.lower())
             if ext in ignore_extensions:
-                print 'Ignoring file',f
+                print 'Ignoring file',file_path
                 continue
             
-            index_file(f,f['path'],f['path'])
+            index_file(f,file_path,os.path.basename(file_path))
 
         for d in directories:
             index_path(d)
@@ -137,7 +139,7 @@ def index_user(id):
             
             if not stale:
                 return
-            print  '\033[94m',f,'haschanges',modified,last_modified,file_md['modified'],'\033[0m'
+            print  '[%s] \033[94m',f,'haschanges',modified,last_modified,file_md['modified'],'\033[0m' % (user_email)
 
             def stream_reader(fr,limit=None):
                 if limit:

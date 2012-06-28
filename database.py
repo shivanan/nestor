@@ -92,6 +92,7 @@ class DataStore(object):
 
 	def save_document(self,id,file,indexed=False,modified=None,metadata=None,error=None):
 		condition = {"uid":id,"file":file}
+		
 		modifications = {"indexed":indexed}
 		if modified:
 			modifications['modified'] = modified
@@ -100,8 +101,11 @@ class DataStore(object):
 		if error:
 			modifications['error'] = error
 
+		modifications['name'] = os.path.basename(file)
+
 		db = self.db()
 		db.files.update(condition,{"$set":modifications},upsert=True)
+	
 	def index_count(self,id):
 		db = self.db()
 		return db.files.find({"uid":id,"indexed":True}).count()

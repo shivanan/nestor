@@ -1,5 +1,5 @@
 Following python libraries are required:
-Whoosh
+Whoosh - sudo easy_install Whoosh
 Dropbox
 PyMongo - sudo easy_install pymongo
 py-bcrypt - sudo easy_install py-bcrypt

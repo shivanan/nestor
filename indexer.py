@@ -168,7 +168,6 @@ def index_user(id):
             ds.save_document(id,f,indexed=indexed,modified=modified,error=e.message)
 
 
-    path = get_path('/')
     index_path('/')
     writer.close()
     print 'committing'

@@ -9,10 +9,17 @@ See LICENSE for licensing information.
 
 import logging
 from xml.etree import ElementTree as etree
+_has_pil = False
 try:
     from PIL import Image
+    _has_pil = True
 except ImportError:
-    import Image
+    try:
+        import Image
+        _has_pil = True
+    except ImportError:
+        pass
+
 import zipfile
 import shutil
 import re
@@ -380,7 +387,12 @@ def picture(relationshiplist, picname, picdescription, pixelwidth=None,
     # Check if the user has specified a size
     if not pixelwidth or not pixelheight:
         # If not, get info from the picture itself
-        pixelwidth,pixelheight = Image.open(picname).size[0:2]
+
+        #If PIL was not found, then just randomly choose something - HS
+        if not _has_pil:
+            pixelwidth,pixelheight = (20,20)
+        else:
+            pixelwidth,pixelheight = Image.open(picname).size[0:2]
 
     # OpenXML measures on-screen objects in English Metric Units
     # 1cm = 36000 EMUs

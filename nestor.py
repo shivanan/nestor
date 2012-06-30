@@ -108,7 +108,7 @@ def linkaccount():
 	if not 'uid' in session:
 		return redirect(url_for('login'))
 	dbs = db.get_session()
-	req_token,url = db.authapp(dbs,'http://127.0.0.1:5000/linked')
+	req_token,url = db.authapp(dbs,url_for('linked',_external=True))
 	session['db_req_token'] = req_token.key + '###' + req_token.secret
 	return redirect (url)
 

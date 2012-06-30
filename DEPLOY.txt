@@ -1,0 +1,19 @@
+Steps to deploy a flask-based app in EC2:
+
+sudo yum install gcc
+sudo yum install git
+sudo yum install nginx
+sudo yum install python27
+sudo yum install python27-devel
+
+#download pip
+
+pip install virtualenv
+
+virtualenv -p /user/bin/python27 ~/appenv
+cd appenv
+source bin/activate
+
+git clone https://github.com/user/project.git
+pip install -r  project/requirements.txt
+pip install uwsgi

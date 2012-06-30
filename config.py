@@ -15,7 +15,7 @@ import os
 
 def cfg():
 	p = ConfigParser.ConfigParser()
-	p.read(['nestor.conf',os.path.expanduser('~/.nestor')])
+	p.read(['/etc/nestor.conf','nestor.conf',os.path.expanduser('~/.nestor')])
 	return p
 
 def get_dropbox_keys():

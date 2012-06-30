@@ -1,6 +1,7 @@
 import pymongo
 import datetime
 import bcrypt
+import os
 DB_SERVER = 'localhost'
 DB_PORT = 27017
 DB = 'nestor'

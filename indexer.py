@@ -164,7 +164,7 @@ def index_user(id):
         
         except Exception,e:
             print 'skipping',e
-            raise
+            return
             ds.save_document(id,f,indexed=indexed,modified=modified,error=e.message)
 
 
